@@ -1,0 +1,16 @@
+code .gitignore
+```
+
+Y adentro pegas esto:
+```
+# Archivos de AWS
+function.zip
+output.json
+
+# Archivos personales
+fundaments.txt
+
+# Python
+__pycache__/
+*.pyc
+.env
