@@ -39,7 +39,7 @@ def save_appointment(data):
 
 def get_appointment(appointment_id):
     """
-    Retrives an appointment by ID from DunamoDB.
+    Retrives an appointment by ID from DynamoDB.
 
     args:
         appointment_id (str): unique appointment identifier
@@ -49,6 +49,38 @@ def get_appointment(appointment_id):
     """
     response = table.get_item(Key={'appointment_id': appointment_id})
     return response.get('Item', None)
+
+def update_appointment_state(appointment_id, new_state):
+    """
+    Updates the state of an existing appointment
+
+    args:
+        appointment_id (str): Unique appointment identifier
+        new_state (str): New state value (confirmed/pending/cancelled)
+    returns:
+        dict: DynamoDB response
+    """
+    response = table.update_item(
+        Key={'appointment_id': appointment_id},
+        UpdateExpression="set #s = :new_state",
+        ExpressionAttributeNames={'#s': 'state'},   
+        ExpressionAttributeValues={':new_state': new_state},
+    )
+    return response
+
+def delete_appointment(appointment_id):
+    """
+    Deletes an appointment from DynamoDB.
+
+    args:
+        appointment_id (str): Unique appointment identifier
+
+    returns:
+        dict: DynamoDB response
+    """
+    response = table.delete_item(Key={'appointment_id': appointment_id})
+    return response
+
 
 #Save the appointment
 result = save_appointment(appointment_data)
@@ -62,3 +94,18 @@ if retrieved:
     print(f"Found appointment: patient: {retrieved['name_patient']} with Dr. {retrieved['name_doctor']}")
 else:
     print("Appointment not found.")
+
+#Test updating the appointment
+print("\n--- Testing UPDATE ---")
+update_appointment_state(appointment_data['appointment_id'], "cancelled")
+updated = get_appointment(appointment_data['appointment_id']) 
+print(f"New state: {updated['state']}")
+
+#Test deleting the appointment
+print("\n--- Testing DELETE ---")
+delete_appointment(appointment_data["appointment_id"])
+returned = get_appointment(appointment_data['appointment_id'])
+if not returned:        
+    print("Appointment successfully deleted.")
+else:   
+    print("Failed to delete appointment.")
