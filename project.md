@@ -1,6 +1,6 @@
 # AWS Serverless Appointment System
 
-## the problem
+## The problem
 
 The problem is that small clinics in latin america manage appointments manually via WhatsApp, losing reservations due to the lack of a confirmations system.
 
