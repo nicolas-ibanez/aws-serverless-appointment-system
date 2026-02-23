@@ -31,31 +31,59 @@ def save_appointment(data):
     response = table.put_item(Item=data)
     return response
 
+def get_appointment(appointment_id):
+    """
+    Retrives an appoiontment by ID from DynamoDB.
+
+    args:
+        appointment_id (str): unique appointment identifier
+
+    returns:
+        dict: appointment data or none if not found
+    """
+    response = table.get_item(Key={'appointment_id': appointment_id})
+    return response.get('Item', None)
+
 def lambda_handler(event, context):
     """
-    Lambda function handler for creating appointments.
+    Lambda function handler for appointment operations.
+    Routes based on HTTP method.
     """
-    # Parse the incoming event data
-    body = json.loads(event['body'])
+    http_method = event['httpMethod']
 
-    # Generate appointment data with generated ID
-    appointment_data = {
-        "appointment_id": generate_appointment_id(),
-        "patient_name": body['patient_name'],
-        "doctor_name": body['doctor_name'],
-        "appointment_date": body['appointment_date'],
-        "appointment_time": body['appointment_time'],
-        "state": "pending"  # Default state
-    }
+    # POST - create appointment
+    if http_method == 'POST':
+        body = json.loads(event['body'])
+        appointment_data = {
+            "appointment_id": generate_appointment_id(),
+            "patient_name": body["patient_name"],
+            "doctor_name": body["doctor_name"],
+            "appointment_date": body["appointment_date"],
+            "appointment_time": body["appointment_time"],
+            "state": "pending"
+        }
 
-    # Save the appointment to DynamoDB
-    save_appointment(appointment_data)
+        save_appointment(appointment_data)
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': 'Appointment created successfully',
+                'appointment_id': appointment_data['appointment_id']
+            })
+        }
+    
+    # GET - retrieve appointment
+    elif http_method == 'GET':
+        appointment_id = event['pathParameters']['id']
+        appointment = get_appointment(appointment_id)
 
-    # Return success response
-    return {
-        'statusCode': 200,
-        'body': json.dumps({
-            'message': 'appointment created successfully',
-            'appointment_id': appointment_data['appointment_id']
-        })
-    } 
+        if appointment:
+            return {
+                'statusCode': 200,
+                'body': json.dumps(appointment)
+            }
+        else:
+            return {
+                'statusCode': 404,
+                'body': json.dumps({'message': 'Appointment not found'})
+            }
