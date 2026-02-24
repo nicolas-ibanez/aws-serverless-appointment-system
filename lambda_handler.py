@@ -33,7 +33,7 @@ def save_appointment(data):
 
 def get_appointment(appointment_id):
     """
-    Retrives an appoiontment by ID from DynamoDB.
+    Retrives an appointment by ID from DynamoDB.
 
     args:
         appointment_id (str): unique appointment identifier
@@ -61,6 +61,19 @@ def update_appointment_state(appointment_id, new_state):
         ExpressionAttributeNames={'#s': 'state'},
         ExpressionAttributeValues={':new_state': new_state},
     )
+    return response
+
+def delete_appointment(appointment_id):
+    """
+    Deletes an appointment from DynamoDB.
+
+    args:
+        appointment_id (str): Unique appointment identifier
+
+    returns:
+        dict: DynamoDB response
+    """
+    response = table.delete_item(Key={'appointment_id': appointment_id})
     return response
 
 def lambda_handler(event, context):
@@ -121,5 +134,18 @@ def lambda_handler(event, context):
                 'appointment_id': appointment_id,
                 'new_state': new_state
 
+            })
+        }
+    
+    # DELETE - delete appointment
+    elif http_method == 'DELETE':
+        appointment_id = event['pathParameters']['id']
+        delete_appointment(appointment_id)
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': 'Appointment deleted successfully',
+                'appointment_id': appointment_id
             })
         }
