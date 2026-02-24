@@ -44,6 +44,25 @@ def get_appointment(appointment_id):
     response = table.get_item(Key={'appointment_id': appointment_id})
     return response.get('Item', None)
 
+def update_appointment_state(appointment_id, new_state):
+    """
+    Updates the state of an existing appointment.
+
+    args:
+       appointment_id (str): unique appointment identifier
+       new_state (str): new state value (pending/confirmed/cancelled) 
+
+    returns:
+        dict: DynamoDB response
+    """
+    response = table.update_item(
+        Key={'appointment_id': appointment_id},
+        UpdateExpression="SET #s = :new_state",
+        ExpressionAttributeNames={'#s': 'state'},
+        ExpressionAttributeValues={':new_state': new_state},
+    )
+    return response
+
 def lambda_handler(event, context):
     """
     Lambda function handler for appointment operations.
@@ -87,3 +106,20 @@ def lambda_handler(event, context):
                 'statusCode': 404,
                 'body': json.dumps({'message': 'Appointment not found'})
             }
+    # PUT - update appointment state
+    elif http_method == 'PUT':
+        appointment_id = event['pathParameters']['id']
+        body = json.loads(event['body'])
+        new_state = body['state']
+
+        update_appointment_state(appointment_id, new_state)
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': 'Appointment state updated successfully',
+                'appointment_id': appointment_id,
+                'new_state': new_state
+
+            })
+        }
