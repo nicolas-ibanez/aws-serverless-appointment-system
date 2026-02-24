@@ -22,10 +22,28 @@ Invoke-RestMethod -Uri "https://33sgjn5042.execute-api.us-east-1.amazonaws.com/d
   "appointment_id": "APT-20260220123045"
 }
 ```
+### GET /appointments/{id}
+Retrieve an appointment by ID
+
+**Request:**
+```bash
+Invoke-RestMethod -Uri "https://33sgjn5042.execute-api.us-east-1.amazonaws.com/dev/appointments/APT-20260221224937" -Method Get
+```
+
+**Response:**
+```json
+{
+  "appointment_id": "APT-20260221224937",
+  "doctor_name": "Dr. Silva",
+  "patient_name": "Carlos",
+  "appointment_date": "2026-03-15",
+  "appointment_time": "09:30",
+  "state": "pending"
+}
+```
 
 ---
 
 ## Coming Soon
-- GET /appointments/{id}
 - PUT /appointments/{id}
 - DELETE /appointments/{id}
