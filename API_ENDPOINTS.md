@@ -107,35 +107,6 @@ Invoke-RestMethod -Uri "[https://33sgjn5042.execute-api.us-east-1.amazonaws.com/
 }
 ```
 
-
-### PUT /appointments/{id}
-
-Update the state of an appointment
-
-
-
-**Request:**
-
-```bash
-
-Invoke-RestMethod -Uri "[https://33sgjn5042.execute-api.us-east-1.amazonaws.com/dev/appointments/APT-123456789](https://33sgjn5042.execute-api.us-east-1.amazonaws.com/dev/appointments/APT-123456789)" -Method Put -Headers @{"Content-Type"="application/json"} -Body '{"state": "confirmed"}'
-```
-
-
-**Response:**
-```json
-{
-
-  "message": "Appointment state updated successfully",
-
-  "appointment_id": "APT-123456789",
-
-  "new_state": "confirmed"
-
-}
-
-```
-
 ### DELETE /appointments/{id}
 
 Delete an apointment
