@@ -72,29 +72,19 @@ Build a portfolio piece defendable in technical English for:
 
 ### Completed ✅
 - [x] DynamoDB table designed with proper Partition Key strategy
-- [x] Python CRUD operations (save, get, update, delete) tested locally
-- [x] Lambda handler adapted for AWS environment
-- [x] CREATE function deployed to AWS Lambda
-- [x] Boto3 integration functional
-- [x] Git repository with .gitignore protecting credentials
-- [x] Basic project documentation (PROJECT.md)
-- [x] API Gateway REST API created ← New
-- [x] POST /appointments endpoint functional ← New
-- [x] Deployed to dev stage ← New
-- [x] Tested from internet with PowerShell ← New
+- [x] Python CRUD operations tested and deployed to AWS Lambda (Fat Lambda pattern)
+- [x] API Gateway REST API created and integrated with Lambda proxy
+- [x] POST, GET, PUT, DELETE endpoints fully functional and tested via PowerShell
+- [x] Error handling and input validation (try/catch blocks implemented)
+- [x] CloudWatch structured JSON logging configuration
+- [x] Production-grade Observability (CloudWatch Alarms for Errors/Duration/Throttles + SNS alerts + Visual Dashboard)
 
 ### In Progress 🚧
-- [ ] API Gateway REST API creation
-- [ ] API Gateway + Lambda integration
-- [ ] GET, UPDATE, DELETE endpoints deployment
-- [ ] CloudWatch logging configuration
-- [ ] Error handling and input validation
+- [ ] Terraform infrastructure migration (from manual manual clicks to IaC)
 
 ### Pending ⏳
-- [ ] Terraform infrastructure migration (from manual to IaC)
-- [ ] Comprehensive README in English with setup instructions
+- [ ] Comprehensive README in English with setup instructions & Dashboard screenshot
 - [ ] Architecture diagram (draw.io or Excalidraw)
-- [ ] Postman collection for API testing
 - [ ] Dead Letter Queue for failed invocations
 
 ---
