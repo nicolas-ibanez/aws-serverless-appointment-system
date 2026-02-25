@@ -1,4 +1,4 @@
-⚡️ AWS Serverless Appointment System
+## ⚡️ AWS Serverless Appointment System
 
 "Architecture over interface. Engineering over fashion."
 
