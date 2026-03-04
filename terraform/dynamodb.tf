@@ -5,6 +5,7 @@ resource "aws_dynamodb_table" "appointments_table" {
     tags = {
       Environment = "dev"
       project = "ServerlessAppointmentSystem"
+      Test = "linux"
     }
     attribute {
        name = "appointment_id"

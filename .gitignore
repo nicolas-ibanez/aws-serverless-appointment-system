@@ -9,8 +9,25 @@ output.json
 
 # Archivos personales
 fundaments.txt
+ROADMAP.md
+project.md
 
 # Python
+lambda_function.py
 __pycache__/
 *.pyc
 .env
+**/.terraform
+**/terraform.tfstate
+**/terraform.tfstate.1772233963.backup
+**/terraform.tfstate.backup
+
+# Entornos virtuales de Python
+.venv/
+env/
+
+# Archivos empaquetados
+*.zip
+
+# Excluir carpeta de fotos temporales (opcional, bórralo si sí deben subir)
+photos/

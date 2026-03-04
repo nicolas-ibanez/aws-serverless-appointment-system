@@ -91,7 +91,7 @@ def lambda_handler(event, context):
         logger.info(f"Received {http_method} request", extra={
             'method': http_method,
             'path': event.get('path'),
-            'request_id': context.request_id
+            'request_id': context.aws_request_id
         })
         
         # POST - Create appointment
