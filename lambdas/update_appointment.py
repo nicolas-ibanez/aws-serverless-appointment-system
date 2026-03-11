@@ -8,7 +8,7 @@ logger.setLevel(logging.INFO)
 
 # Independent initialization and environment variable usage
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table(os.environ['TABLE_NAME'])
+table = dynamodb.Table(os.environ['AppointmentsTable'])
 
 # Strict schema definition to prevent garbage data in DynamoDB
 ALLOWED_FIELDS = ['patient_name', 'doctor_name', 'appointment_date', 'appointment_time', 'state']

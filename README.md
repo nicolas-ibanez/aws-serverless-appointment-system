@@ -1,53 +1,153 @@
-## ⚡️ AWS Serverless Appointment System
+# AWS Serverless Appointment System
 
-"Architecture over interface. Engineering over fashion."
+A production-grade serverless REST API for appointment management, built on AWS and managed 100% with Terraform.
 
-## The Problem
-Small clinics and service businesses in Latin America 
-manage appointments via WhatsApp manually, losing 
-30-40% of bookings due to no confirmation system. 
-This backend solves that with a scalable, serverless API.
+---
+
+## Problem Statement
+
+Small clinics and service businesses across Latin America rely on WhatsApp to manage bookings manually — a process with no confirmation system, no audit trail, and significant booking loss. This project delivers a scalable, cost-efficient backend API to replace that workflow.
+
+---
 
 ## Architecture
-[diagrama simple aquí - lo construimos juntos]
 
-API Gateway → Lambda (Python) → DynamoDB
-                    ↓
-                 S3 (audit logs)
-                    ↓
-              CloudWatch (alerts)
+**Pattern:** Microservices — one Lambda per CRUD operation, each with its own isolated IAM role.
+```
+Client Request
+     │
+     ▼
+API Gateway          ← [ PENDING: api_gateway.tf ]
+     │
+     ├──► create_appointment  (Lambda + IAM Role)  ──► DynamoDB
+     ├──► get_appointment     (Lambda + IAM Role)  ──► DynamoDB
+     ├──► update_appointment  (Lambda + IAM Role)  ──► DynamoDB
+     └──► delete_appointment  (Lambda + IAM Role)  ──► DynamoDB
+                                                        │
+                                                   CloudWatch Logs
+```
 
-## Tech Decisions & Why
-| Component     | Choice      | Rejected    | Reason                          |
-|---------------|-------------|-------------|----------------------------------|
-| Database      | DynamoDB    | RDS/MySQL   | No joins needed, pay-per-request|
-| Compute       | Lambda      | EC2         | Traffic is sporadic, not 24/7   |
-| IaC           | Terraform   | Console     | Reproducible, version-controlled|
+---
+
+## Infrastructure State
+
+### ✅ Deployed & Validated
+
+| Layer      | Resource                   | Details                                                    |
+| :--------- | :------------------------- | :--------------------------------------------------------- |
+| Database   | `appointments_table`       | DynamoDB, single-table design, pay-per-request             |
+| Security   | `lambda_appointments_role` | 1 IAM Role with strict PoLP — DynamoDB + CloudWatch only   |
+| Compute    | `create_appointment`       | Lambda, Python 3.9, `.zip` package                         |
+| Compute    | `get_appointment`          | Lambda, Python 3.9, `.zip` package                         |
+| Compute    | `update_appointment`       | Lambda, Python 3.9, `.zip` package                         |
+| Compute    | `delete_appointment`       | Lambda, Python 3.9, `.zip` package                         |
+| Monitoring | CloudWatch Log Groups (×4) | One per Lambda, 14-day retention policy                    |
+
+### 🔲 Pending
+
+| Layer   | Resource                    | File             |
+| :------ | :-------------------------- | :--------------- |
+| Network | API Gateway REST API        | `api_gateway.tf` |
+| Network | `aws_lambda_permission` ×4  | `api_gateway.tf` |
+
+---
+
+## Tech Decisions
+
+| Component | Choice                 | Rejected          | Reason                                                                    |
+| :-------- | :--------------------- | :---------------- | :------------------------------------------------------------------------ |
+| Database  | DynamoDB               | RDS / MySQL       | No joins required. Single-digit ms latency. Pay-per-request cost model.   |
+| Compute   | Lambda (microservices) | EC2 / Fat Lambda  | Sporadic traffic. Isolated failures. Per-function cold start tuning.      |
+| IaC       | Terraform              | AWS Console / SAM | Reproducible. Version-controlled. Prevents architectural drift.           |
+| Runtime   | Python 3.9             | Node.js           | boto3 is idiomatic. Strong AWS SDK support.                               |
+
+---
 
 ## Security Model
-- Each Lambda has its own IAM Role (not shared)
-- Roles follow strict PoLP: only the permissions needed
-- No hardcoded credentials, all via environment variables
 
-## API Endpoints
-POST /appointments     → Create appointment
-GET  /appointments/{id} → Get by ID  
-PUT  /appointments/{id} → Update status
-DELETE /appointments/{id} → Cancel
+- Each Lambda function has its own **isolated IAM Role** — no shared credentials.
+- **Strict Principle of Least Privilege (PoLP):**
+  - `create_appointment` → `dynamodb:PutItem` only
+  - `get_appointment` → `dynamodb:GetItem` only
+  - `update_appointment` → `dynamodb:UpdateItem` only
+  - `delete_appointment` → `dynamodb:DeleteItem` only
+- All roles include `logs:CreateLogGroup`, `logs:CreateLogStream`, `logs:PutLogEvents` for CloudWatch.
+- No hardcoded credentials. All identity managed via AWS IAM and Terraform.
 
-## Current Status
-- [x] IAM roles configured with PoLP
-- [x] DynamoDB table with single-table design
-- [ ] Lambda CRUD operations (in progress)
-- [ ] API Gateway integration
-- [ ] CloudWatch alarms
-- [ ] Terraform migration
+---
 
-## Running Locally
-aws lambda invoke --function-name createAppointment \
-  --payload '{"patientId": "123", "date": "2026-03-01"}' \
-  response.json
-## 👨‍💻 Author
-**Nicolás Ibañez**
-*Civil Engineering in Informatics Student at UNAB*
-> *Goal: Building technical excellence and high-value engineering criteria.*
+## Application Logic
+
+Lambdas are built for **API Gateway Proxy Integration**. The event payload must be a JSON string nested under a `"body"` key.
+
+**Required fields (validated before any DynamoDB write):**
+
+| Field              | Type   | Notes                    |
+| :----------------- | :----- | :----------------------- |
+| `patient_name`     | string | Full name of the patient |
+| `doctor_name`      | string | Full name of the doctor  |
+| `appointment_date` | string | Format: `YYYY-MM-DD`     |
+| `appointment_time` | string | Format: `HH:MM`          |
+
+> `appointment_id` is auto-generated by the Lambda using a timestamp (`APT-YYYYMMDDHHMMSS`). Do not include it in the request.
+
+**Example payload:**
+```json
+{
+  "body": "{\"patient_name\": \"Ana Torres\", \"doctor_name\": \"Dr. Vega\", \"appointment_date\": \"2026-03-15\", \"appointment_time\": \"10:00\"}"
+}
+```
+
+Missing or unknown fields return `400 Bad Request`.
+
+---
+
+## Deployment
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+**Validate a Lambda directly via AWS CLI (current testing method):**
+```bash
+aws lambda invoke \
+  --function-name create_appointment \
+  --payload '{"body": "{\"patient_name\": \"Ana Torres\", \"doctor_name\": \"Dr. Vega\", \"appointment_date\": \"2026-03-15\", \"appointment_time\": \"10:00\"}"}' \
+  --cli-binary-format raw-in-base64-out \
+  response.json && cat response.json
+```
+
+> Note: requires AWS CLI configured with access to the deployment account.
+
+---
+
+## Terraform File Map
+```
+terraform/
+├── main.tf            ✅ Provider config, backend
+├── dynamodb.tf        ✅ appointments_table
+├── iam.tf             ✅ lambda_appointments_role + policy
+├── lambda.tf          ✅ 4 Lambda functions + CloudWatch Log Groups
+└── api_gateway.tf     🔲 PENDING
+```
+
+---
+
+## Roadmap
+
+- [x] DynamoDB table (single-table design)
+- [x] IAM roles — strict PoLP per Lambda
+- [x] Lambda CRUD functions (Python 3.9, microservices pattern)
+- [x] CloudWatch Log Groups with 14-day retention
+- [x] Data and compute layers validated via AWS CLI
+- [ ] API Gateway — REST API + routes + Lambda integration
+- [ ] `aws_lambda_permission` for API Gateway invocation
+- [ ] End-to-end HTTP testing
+
+---
+
+## Author
+
+**Nicolás Ibañez** — Civil Engineering in Informatics, Universidad Andrés Bello  
+[github.com/nicolas-ibanez/aws-serverless-appointment-system](https://github.com/nicolas-ibanez/aws-serverless-appointment-system)
