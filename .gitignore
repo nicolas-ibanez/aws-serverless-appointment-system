@@ -11,6 +11,7 @@ output.json
 fundaments.txt
 ROADMAP.md
 project.md
+response.json
 
 # Python
 lambda_function.py
