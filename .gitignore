@@ -1,20 +1,13 @@
-code .gitignore
-```
-
-Y adentro pegas esto:
-```
 # Archivos de AWS
 function.zip
 output.json
 
 # Archivos personales
 fundaments.txt
-ROADMAP.md
 project.md
 response.json
 
 # Python
-lambda_function.py
 __pycache__/
 *.pyc
 .env
@@ -30,5 +23,5 @@ env/
 # Archivos empaquetados
 *.zip
 
-# Excluir carpeta de fotos temporales (opcional, bórralo si sí deben subir)
+# Excluir carpeta de fotos temporales
 photos/

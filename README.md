@@ -13,18 +13,26 @@ Small clinics and service businesses across Latin America rely on WhatsApp to ma
 ## Architecture
 
 **Pattern:** Microservices — one Lambda per CRUD operation, each with its own isolated IAM role.
-```
-Client Request
-     │
-     ▼
-API Gateway          ← [ PENDING: api_gateway.tf ]
-     │
-     ├──► create_appointment  (Lambda + IAM Role)  ──► DynamoDB
-     ├──► get_appointment     (Lambda + IAM Role)  ──► DynamoDB
-     ├──► update_appointment  (Lambda + IAM Role)  ──► DynamoDB
-     └──► delete_appointment  (Lambda + IAM Role)  ──► DynamoDB
-                                                        │
-                                                   CloudWatch Logs
+```mermaid
+graph TD
+    Client([📱 Client Request]) --> API[🌐 API Gateway]
+    
+    subgraph Compute [Lambda Microservices & IAM]
+        API --> Create[⚡ create_appointment]
+        API --> Get[⚡ get_appointment]
+        API --> Update[⚡ update_appointment]
+        API --> Delete[⚡ delete_appointment]
+    end
+
+    Create --> DB[(💾 DynamoDB AppointmentsTable)]
+    Get --> DB
+    Update --> DB
+    Delete --> DB
+
+    Create -.-> Logs[📊 CloudWatch Logs]
+    Get -.-> Logs
+    Update -.-> Logs
+    Delete -.-> Logs
 ```
 
 ---
@@ -35,6 +43,7 @@ API Gateway          ← [ PENDING: api_gateway.tf ]
 
 | Layer      | Resource                   | Details                                                    |
 | :--------- | :------------------------- | :--------------------------------------------------------- |
+| Network    | API Gateway REST API       | Handles routing and payload proxying                       |
 | Database   | `appointments_table`       | DynamoDB, single-table design, pay-per-request             |
 | Security   | `lambda_appointments_role` | 1 IAM Role with strict PoLP — DynamoDB + CloudWatch only   |
 | Compute    | `create_appointment`       | Lambda, Python 3.9, `.zip` package                         |
@@ -43,12 +52,16 @@ API Gateway          ← [ PENDING: api_gateway.tf ]
 | Compute    | `delete_appointment`       | Lambda, Python 3.9, `.zip` package                         |
 | Monitoring | CloudWatch Log Groups (×4) | One per Lambda, 14-day retention policy                    |
 
-### 🔲 Pending
+---
 
-| Layer   | Resource                    | File             |
-| :------ | :-------------------------- | :--------------- |
-| Network | API Gateway REST API        | `api_gateway.tf` |
-| Network | `aws_lambda_permission` ×4  | `api_gateway.tf` |
+## Architecture Evolution: From Fat Lambda to Microservices
+
+Initially, this project started as a single "Fat Lambda" (`legacy_v1/lambda_function.py`) handling all CRUD operations. While functional for early prototyping, I decided to refactor the architecture into independent microservices managed by Terraform. 
+
+This evolution allowed me to:
+- **Improve Cold Starts**: Smaller, focused Lambda packages.
+- **Enforce Least Privilege (PoLP)**: Each Lambda now has an IAM role restricted to only the specific DynamoDB action it needs (e.g., `dynamodb:PutItem` vs `dynamodb:GetItem`).
+- **Improve Maintainability**: Independent deployments and isolated failure domains.
 
 ---
 
@@ -129,7 +142,7 @@ terraform/
 ├── dynamodb.tf        ✅ appointments_table
 ├── iam.tf             ✅ lambda_appointments_role + policy
 ├── lambda.tf          ✅ 4 Lambda functions + CloudWatch Log Groups
-└── api_gateway.tf     🔲 PENDING
+└── api_gateway.tf     ✅ REST API + Routes
 ```
 
 ---
@@ -141,9 +154,9 @@ terraform/
 - [x] Lambda CRUD functions (Python 3.9, microservices pattern)
 - [x] CloudWatch Log Groups with 14-day retention
 - [x] Data and compute layers validated via AWS CLI
-- [ ] API Gateway — REST API + routes + Lambda integration
-- [ ] `aws_lambda_permission` for API Gateway invocation
-- [ ] End-to-end HTTP testing
+- [x] API Gateway — REST API + routes + Lambda integration
+- [x] `aws_lambda_permission` for API Gateway invocation
+- [x] End-to-end HTTP testing
 
 ---
 
