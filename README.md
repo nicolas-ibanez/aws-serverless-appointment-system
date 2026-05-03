@@ -15,7 +15,12 @@ Small clinics and service businesses across Latin America rely on WhatsApp to ma
 **Pattern:** Microservices — one Lambda per CRUD operation, each with its own isolated IAM role.
 ```mermaid
 graph TD
-    Client([📱 Client Request]) --> API[🌐 API Gateway]
+    %% Explicit styling for dark mode readability
+    classDef default fill:#1E1E1E,stroke:#FF9900,stroke-width:2px,color:#FFFFFF;
+    classDef db fill:#336690,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF;
+    classDef client fill:#1E88E5,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF;
+
+    Client([📱 Client Request]):::client --> API[🌐 API Gateway]
     
     subgraph Compute [Lambda Microservices & IAM]
         API --> Create[⚡ create_appointment]
@@ -24,7 +29,7 @@ graph TD
         API --> Delete[⚡ delete_appointment]
     end
 
-    Create --> DB[(💾 DynamoDB AppointmentsTable)]
+    Create --> DB[(💾 DynamoDB AppointmentsTable)]:::db
     Get --> DB
     Update --> DB
     Delete --> DB
@@ -33,6 +38,8 @@ graph TD
     Get -.-> Logs
     Update -.-> Logs
     Delete -.-> Logs
+
+    style Compute fill:transparent,stroke:#888888,stroke-dasharray: 5 5,color:#FFFFFF
 ```
 
 ---
